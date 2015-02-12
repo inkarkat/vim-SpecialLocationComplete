@@ -84,8 +84,27 @@ function! s:GetOptions()
 
     return l:options
 endfunction
+function! s:ExpandTemplate( template, value )
+    return substitute(a:template, '%s', "\\='\\V' . a:value . '\\m'", 'g')
+endfunction
 let s:repeatCnt = 0
 function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
+    if ! exists('s:key')
+	if ! s:PrintAvailableKeys()
+	    return -1
+	endif
+
+	let s:key = ingo#query#get#Char()
+
+	if a:findstart
+	    " Invoked by CompleteHelper#Repeat#TestForRepeat(); continue to
+	    " determine the base.
+	else
+	    " Just invoked to query for s:key.
+	    return ''
+	endif
+    endif
+
     try
 	let l:options = s:GetOptions()
 
@@ -93,17 +112,24 @@ function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
 	    if a:findstart
 		return col('.') - 1
 	    else
-		let l:repeatPatternArguments = [s:fullText]
-		if has_key(l:options, 'repeatAnchorExpr')
-		    call add(l:repeatPatternArguments, l:repeatAnchorExpr)
-		    if has_key(l:options, 'repeatPositiveExpr')
-			call add(l:repeatPatternArguments, l:repeatPositiveExpr)
-			if has_key(l:options, 'repeatNegativeExpr')
-			    call add(l:repeatPatternArguments, l:repeatNegativeExpr)
+		if has_key(l:options, 'repeatPatternTemplate')
+		    " Need to translate the embedded ^@ newline into the \n atom.
+		    let l:previousCompleteExpr = substitute(escape(s:fullText, '\'), '\n', '\\n', 'g')
+
+		    let l:repeatPattern = s:ExpandTemplate(l:options.repeatPatternTemplate, l:previousCompleteExpr)
+		else
+		    let l:repeatPatternArguments = [s:fullText]
+		    if has_key(l:options, 'repeatAnchorExpr')
+			call add(l:repeatPatternArguments, l:repeatAnchorExpr)
+			if has_key(l:options, 'repeatPositiveExpr')
+			    call add(l:repeatPatternArguments, l:repeatPositiveExpr)
+			    if has_key(l:options, 'repeatNegativeExpr')
+				call add(l:repeatPatternArguments, l:repeatNegativeExpr)
+			    endif
 			endif
 		    endif
+		    let l:repeatPattern = call('CompleteHelper#Repeat#GetPattern', l:repeatPatternArguments)
 		endif
-		let l:repeatPattern = call('CompleteHelper#Repeat#GetPattern', l:repeatPatternArguments)
 
 		let l:options.processor = function('CompleteHelper#Repeat#Processor')
 
@@ -130,7 +156,7 @@ function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
 	    return l:startCol - 1 " Return byte index, not column.
 	else
 	    " Find matches.
-	    let l:pattern = substitute(get(l:options, 'patternTemplate', '\<%s\k\+'), '%s', "\\='\\V' . escape(a:base, '\\') . '\\m'", 'g')
+	    let l:pattern = s:ExpandTemplate(get(l:options, 'patternTemplate', '\<%s\k\+'), escape(a:base, '\'))
 
 	    let l:matches = []
 	    call CompleteHelper#FindMatches(l:matches, l:pattern, l:options)
@@ -141,33 +167,24 @@ function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
     endtry
 endfunction
 
-function! SpecialLocationComplete#Query( findstart, base )
-    if ! s:PrintAvailableKeys()
-	return -1
-    endif
-
-    let s:key = ingo#query#get#Char()
-
-    return (a:findstart ? SpecialLocationComplete#SpecialLocationComplete(a:findstart, a:base) : '')
-endfunction
 function! SpecialLocationComplete#Expr()
     " If this is not a repeat, CompleteHelper#Repeat#TestForRepeat() invokes
     " 'completefunc' to determine the future base. We need to query the user
-    " (once!) before that. So install the query temporarily.
-    set completefunc=SpecialLocationComplete#Query
+    " (once!) before that.
+    let l:save_key = (exists('s:key') ? s:key : '')
+    unlet! s:key
+    set completefunc=SpecialLocationComplete#SpecialLocationComplete
 
     let s:repeatCnt = 0 " Important!
     let [s:repeatCnt, l:addedText, s:fullText] = CompleteHelper#Repeat#TestForRepeat()
 echomsg '****' string([s:repeatCnt, l:addedText, s:fullText])
     if s:repeatCnt
-	" In the repeat case, above 'completefunc' hasn't yet been invoked. Do
-	" this now in order to query the user for the key. Don't unnecessarily
-	" determine the base again; disable that via a:findstart = 0.
-	call SpecialLocationComplete#Query(0, '')
+	" In the repeat case, above 'completefunc' hasn't yet been invoked.
+	" Restore the previous key to enable proper repeat without re-querying
+	" it from the user.
+	let s:key = l:save_key
     endif
 
-    " Now install the actual complete function, and trigger it.
-    set completefunc=SpecialLocationComplete#SpecialLocationComplete
     return "\<C-x>\<C-u>"
 endfunction
 
