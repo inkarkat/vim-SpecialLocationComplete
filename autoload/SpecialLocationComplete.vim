@@ -86,21 +86,6 @@ function! s:GetOptions()
 endfunction
 let s:repeatCnt = 0
 function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
-    if ! exists('s:key')
-	if ! s:PrintAvailableKeys()
-	    return -1
-	endif
-
-	let s:key = ingo#query#get#Char()
-
-	if a:findstart
-	    " Invoked by CompleteHelper#Repeat#TestForRepeat(); continue to
-	    " determine the base.
-	else
-	    return ''   " Just invoked to query for s:key.
-	endif
-    endif
-
     try
 	let l:options = s:GetOptions()
 
@@ -156,23 +141,33 @@ function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
     endtry
 endfunction
 
+function! SpecialLocationComplete#Query( findstart, base )
+    if ! s:PrintAvailableKeys()
+	return -1
+    endif
+
+    let s:key = ingo#query#get#Char()
+
+    return (a:findstart ? SpecialLocationComplete#SpecialLocationComplete(a:findstart, a:base) : '')
+endfunction
 function! SpecialLocationComplete#Expr()
     " If this is not a repeat, CompleteHelper#Repeat#TestForRepeat() invokes
     " 'completefunc' to determine the future base. We need to query the user
     " (once!) before that. So install the query temporarily.
-    unlet! s:key
-    set completefunc=SpecialLocationComplete#SpecialLocationComplete
+    set completefunc=SpecialLocationComplete#Query
 
     let s:repeatCnt = 0 " Important!
     let [s:repeatCnt, l:addedText, s:fullText] = CompleteHelper#Repeat#TestForRepeat()
 echomsg '****' string([s:repeatCnt, l:addedText, s:fullText])
-    if ! exists('s:key')
+    if s:repeatCnt
 	" In the repeat case, above 'completefunc' hasn't yet been invoked. Do
 	" this now in order to query the user for the key. Don't unnecessarily
 	" determine the base again; disable that via a:findstart = 0.
-	call SpecialLocationComplete#SpecialLocationComplete(0, '')
+	call SpecialLocationComplete#Query(0, '')
     endif
 
+    " Now install the actual complete function, and trigger it.
+    set completefunc=SpecialLocationComplete#SpecialLocationComplete
     return "\<C-x>\<C-u>"
 endfunction
 
