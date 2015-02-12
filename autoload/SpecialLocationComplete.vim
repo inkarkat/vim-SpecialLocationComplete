@@ -39,11 +39,7 @@ function! s:GetAllConfigKeys()
     return l:keys
 endfunction
 function! s:CreateHint( key )
-    let l:config = s:GetConfig(a:key)[1]
-    return (has_key(l:config, 'description') ?
-    \   printf('%s:%s', a:key, l:config.description) :
-    \   a:key
-    \)
+    return [a:key, get(s:GetConfig(a:key)[1], 'description', '')]
 endfunction
 function! s:PrintAvailableKeys()
     let l:keys = s:GetAllConfigKeys()
@@ -51,35 +47,28 @@ function! s:PrintAvailableKeys()
 	return 0
     endif
 
-    let keyHints = map(l:keys, 's:CreateHint(v:val)')
-
     echohl ModeMsg
-    echo printf('-- Special location completion: %s', join(l:keyHints, ' '))
+    echo '-- Special location completion:'
+
+    for [l:key, l:description] in map(l:keys, 's:CreateHint(v:val)')
+	if empty(l:description)
+	    echon ' ' . l:key
+	else
+	    echon ' ' . l:key
+	    echohl None
+	    echon '(' . l:description . ')'
+	    echohl ModeMsg
+	endif
+    endfor
+
     echohl None
     return 1
 endfunction
 
-let s:repeatCnt = 0
-function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
-    if s:repeatCnt
-	if a:findstart
-	    return col('.') - 1
-	else
-	    let l:matches = []
-	    call CompleteHelper#FindMatches(l:matches,
-	    \   CompleteHelper#Repeat#GetPattern(s:fullText, '\%(\^\|\A\)', '\a', '\A'),
-	    \   {'complete': s:GetCompleteOption(), 'processor': function('CompleteHelper#Repeat#Processor')}
-	    \)
-	    if empty(l:matches)
-		call CompleteHelper#Repeat#Clear()
-	    endif
-	    return l:matches
-	endif
-    endif
-
+function! s:GetOptions()
     let [l:scope, l:options] = s:GetConfig(s:key)
     if empty(l:options)
-	return -1
+	throw 'SpecialLocationComplete: No such key'
     elseif ! has_key(l:options, 'complete')
 	" Default to a completion scope that corresponds to the config scope.
 	if l:scope ==# 'w'
@@ -93,23 +82,63 @@ function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
 	endif
     endif
 
-    if a:findstart
-	" Locate the start of the configured characters.
-	let l:base = get(l:options, 'base', '\k\*\%#')
+    return l:options
+endfunction
+let s:repeatCnt = 0
+function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
+    try
+	let l:options = s:GetOptions()
 
-	let l:startCol = searchpos(l:base, 'bn', line('.'))[1]
-	if l:startCol == 0
-	    let l:startCol = col('.')
+	if s:repeatCnt
+	    if a:findstart
+		return col('.') - 1
+	    else
+		let l:repeatPatternArguments = [s:fullText]
+		if has_key(l:options, 'repeatAnchorExpr')
+		    call add(l:repeatPatternArguments, l:repeatAnchorExpr)
+		    if has_key(l:options, 'repeatPositiveExpr')
+			call add(l:repeatPatternArguments, l:repeatPositiveExpr)
+			if has_key(l:options, 'repeatNegativeExpr')
+			    call add(l:repeatPatternArguments, l:repeatNegativeExpr)
+			endif
+		    endif
+		endif
+		let l:repeatPattern = call('CompleteHelper#Repeat#GetPattern', l:repeatPatternArguments)
+
+		let l:options.processor = function('CompleteHelper#Repeat#Processor')
+
+		let l:matches = []
+		call CompleteHelper#FindMatches(l:matches,
+		\   l:repeatPattern,
+		\   l:options
+		\)
+		if empty(l:matches)
+		    call CompleteHelper#Repeat#Clear()
+		endif
+		return l:matches
+	    endif
 	endif
-	return l:startCol - 1 " Return byte index, not column.
-    else
-	" Find matches.
-	let l:pattern = substitute(get(l:options, 'patternTemplate', '\<%s\k\+'), '%s', "\\='\\V' . escape(a:base, '\\') . '\\m'", 'g')
 
-	let l:matches = []
-	call CompleteHelper#FindMatches(l:matches, l:pattern, l:options)
-	return l:matches
-    endif
+	if a:findstart
+	    " Locate the start of the configured characters.
+	    let l:base = get(l:options, 'base', '\k\*\%#')
+
+	    let l:startCol = searchpos(l:base, 'bn', line('.'))[1]
+	    if l:startCol == 0
+		let l:startCol = col('.')
+	    endif
+	    return l:startCol - 1 " Return byte index, not column.
+	else
+	    " Find matches.
+	    let l:pattern = substitute(get(l:options, 'patternTemplate', '\<%s\k\+'), '%s', "\\='\\V' . escape(a:base, '\\') . '\\m'", 'g')
+
+	    let l:matches = []
+	    call CompleteHelper#FindMatches(l:matches, l:pattern, l:options)
+	    return l:matches
+	endif
+    catch /^SpecialLocationComplete:/
+	return -1
+    endtry
 endfunction
 
 function! SpecialLocationComplete#Query( findstart, base )
@@ -130,6 +159,7 @@ function! SpecialLocationComplete#Expr()
 
     let s:repeatCnt = 0 " Important!
     let [s:repeatCnt, l:addedText, s:fullText] = CompleteHelper#Repeat#TestForRepeat()
+echomsg '****' string([s:repeatCnt, l:addedText, s:fullText])
     if ! exists('s:key')
 	" In the repeat case, above 'completefunc' hasn't yet been invoked. Do
 	" this now in order to query the user for the key. Don't unnecessarily
