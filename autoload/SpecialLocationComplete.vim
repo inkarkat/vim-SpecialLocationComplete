@@ -3,7 +3,7 @@
 " DEPENDENCIES:
 "   - CompleteHelper.vim autoload script
 "   - Complete/Repeat.vim autoload script
-"   - ingo/plugin/setting.vim autoload script
+"   - ingo/query/get.vim autoload script
 "
 " Copyright: (C) 2015 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
@@ -84,8 +84,8 @@ function! s:GetOptions()
 
     return l:options
 endfunction
-function! s:ExpandTemplate( template, value )
-    return substitute(a:template, '%s', "\\='\\V' . a:value . '\\m'", 'g')
+function! s:ExpandTemplate( template, value, ... )
+    return substitute(a:template, '%' . (a:0 ? '[sS]' : 's'), "\\='\\V' . (a:0 && submatch(0) ==# '%S' ? a:1 : a:value) . '\\m'", 'g')
 endfunction
 let s:repeatCnt = 0
 function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
@@ -94,7 +94,9 @@ function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
 	    return -1
 	endif
 
-	let s:key = ingo#query#get#Char()
+	call inputsave()
+	    let s:key = ingo#query#get#Char()
+	call inputrestore()
 
 	if a:findstart
 	    " Invoked by CompleteHelper#Repeat#TestForRepeat(); continue to
@@ -114,9 +116,10 @@ function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
 	    else
 		if has_key(l:options, 'repeatPatternTemplate')
 		    " Need to translate the embedded ^@ newline into the \n atom.
-		    let l:previousCompleteExpr = substitute(escape(s:fullText, '\'), '\n', '\\n', 'g')
+		    let l:previousFullCompleteExpr = substitute(escape(s:fullText, '\'), '\n', '\\n', 'g')
+		    let l:previousAddedCompleteExpr = substitute(escape(s:addedText, '\'), '\n', '\\n', 'g')
 
-		    let l:repeatPattern = s:ExpandTemplate(l:options.repeatPatternTemplate, l:previousCompleteExpr)
+		    let l:repeatPattern = s:ExpandTemplate(l:options.repeatPatternTemplate, l:previousFullCompleteExpr, l:previousAddedCompleteExpr)
 		else
 		    let l:repeatPatternArguments = [s:fullText]
 		    if has_key(l:options, 'repeatAnchorExpr')
@@ -176,8 +179,8 @@ function! SpecialLocationComplete#Expr()
     set completefunc=SpecialLocationComplete#SpecialLocationComplete
 
     let s:repeatCnt = 0 " Important!
-    let [s:repeatCnt, l:addedText, s:fullText] = CompleteHelper#Repeat#TestForRepeat()
-echomsg '****' string([s:repeatCnt, l:addedText, s:fullText])
+    let [s:repeatCnt, s:addedText, s:fullText] = CompleteHelper#Repeat#TestForRepeat()
+
     if s:repeatCnt
 	" In the repeat case, above 'completefunc' hasn't yet been invoked.
 	" Restore the previous key to enable proper repeat without re-querying
