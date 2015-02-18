@@ -11,6 +11,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.00.002	16-Feb-2015	Need to get repeat...Expr from a:options; there
+"				are no local variables.
 "	001	13-Feb-2015	file creation
 let s:save_cpo = &cpo
 set cpo&vim
@@ -123,11 +125,11 @@ function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
 		else
 		    let l:repeatPatternArguments = [s:fullText]
 		    if has_key(l:options, 'repeatAnchorExpr')
-			call add(l:repeatPatternArguments, l:repeatAnchorExpr)
+			call add(l:repeatPatternArguments, l:options.repeatAnchorExpr)
 			if has_key(l:options, 'repeatPositiveExpr')
-			    call add(l:repeatPatternArguments, l:repeatPositiveExpr)
+			    call add(l:repeatPatternArguments, l:options.repeatPositiveExpr)
 			    if has_key(l:options, 'repeatNegativeExpr')
-				call add(l:repeatPatternArguments, l:repeatNegativeExpr)
+				call add(l:repeatPatternArguments, l:options.repeatNegativeExpr)
 			    endif
 			endif
 		    endif
