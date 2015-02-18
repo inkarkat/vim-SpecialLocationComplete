@@ -11,6 +11,11 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.00.003	19-Feb-2015	Support a:options.emptyBasePattern.
+"				Add SpecialLocationComplete#SetKey() for
+"				testing. Allow passing a key to
+"				SpecialLocationComplete#Expr() to enable custom
+"				direct mappings.
 "   1.00.002	16-Feb-2015	Need to get repeat...Expr from a:options; there
 "				are no local variables.
 "	001	13-Feb-2015	file creation
@@ -161,7 +166,10 @@ function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
 	    return l:startCol - 1 " Return byte index, not column.
 	else
 	    " Find matches.
-	    let l:pattern = s:ExpandTemplate(get(l:options, 'patternTemplate', '\<%s\k\+'), escape(a:base, '\'))
+	    let l:pattern = (empty(a:base) && has_key(l:options, 'emptyBasePattern') ?
+	    \   get(l:options, 'emptyBasePattern') :
+	    \   s:ExpandTemplate(get(l:options, 'patternTemplate', '\<%s\k\+'), escape(a:base, '\'))
+	    \)
 
 	    let l:matches = []
 	    call CompleteHelper#FindMatches(l:matches, l:pattern, l:options)
@@ -172,18 +180,23 @@ function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
     endtry
 endfunction
 
-function! SpecialLocationComplete#Expr()
-    " If this is not a repeat, CompleteHelper#Repeat#TestForRepeat() invokes
-    " 'completefunc' to determine the future base. We need to query the user
-    " (once!) before that.
-    let l:save_key = (exists('s:key') ? s:key : '')
-    unlet! s:key
+function! SpecialLocationComplete#Expr( ... )
+    if a:0
+	let s:key = a:1
+    else
+	" If this is not a repeat, CompleteHelper#Repeat#TestForRepeat() invokes
+	" 'completefunc' to determine the future base. We need to query the user
+	" (once!) before that.
+	let l:save_key = (exists('s:key') ? s:key : '')
+	unlet! s:key
+    endif
+
     set completefunc=SpecialLocationComplete#SpecialLocationComplete
 
     let s:repeatCnt = 0 " Important!
     let [s:repeatCnt, s:addedText, s:fullText] = CompleteHelper#Repeat#TestForRepeat()
 
-    if s:repeatCnt
+    if s:repeatCnt && exists('l:save_key')
 	" In the repeat case, above 'completefunc' hasn't yet been invoked.
 	" Restore the previous key to enable proper repeat without re-querying
 	" it from the user.
@@ -191,6 +204,9 @@ function! SpecialLocationComplete#Expr()
     endif
 
     return "\<C-x>\<C-u>"
+endfunction
+function! SpecialLocationComplete#SetKey( key )
+    let s:key = a:key
 endfunction
 
 let &cpo = s:save_cpo
