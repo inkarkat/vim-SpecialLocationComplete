@@ -10,6 +10,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.00.002	16-Feb-2015	Add another default pattern for tagname.
+"				Simplify base pattern; it doesn't need to match.
 "	001	13-Feb-2015	file creation
 
 " Avoid installing twice or when in unsupported Vim version.
@@ -25,11 +27,17 @@ set cpo&vim
 if ! exists('g:SpecialLocationCompletions')
     let g:SpecialLocationCompletions = {
     \   't': {
-    \       'description': 'tags',
-    \       'base': '\%(<[^>]*\)*\%#',
+    \       'description': 'tagname',
+    \       'base': '<\%([[:alpha:]_:]\|[^\x00-\x7F]\)\%([-._:[:alnum:]]\|[^\x00-\x7F]\)*\%#',
+    \       'patternTemplate': '<<\@!\&<\?%s\%([-._:[:alnum:]]\|[^\x00-\x7F]\)\+',
+    \       'repeatAnchorExpr': '',
+    \   },
+    \   'T': {
+    \       'description': 'full tag',
+    \       'base': '<[^>]*\%#',
     \       'patternTemplate': '<<\@!\&<\?%s[^>]\+>',
     \       'repeatPatternTemplate': '%S\_.\{-}\zs<[^<]\+>',
-    \   }
+    \   },
     \}
 endif
 
