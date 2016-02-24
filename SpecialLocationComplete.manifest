@@ -1,0 +1,3 @@
+autoload/SpecialLocationComplete.vim
+plugin/SpecialLocationComplete.vim
+doc/SpecialLocationComplete.txt
