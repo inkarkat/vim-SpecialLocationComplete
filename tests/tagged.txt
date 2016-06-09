@@ -1,0 +1,18 @@
+<root>
+    <runtime scope="really">
+	<right border="2">some text</right><ring/>
+    </runtime>
+    <prefix:foo bar="quux" baz="more"/>
+    <prefix:fox description="lala">inner</prefix:fox>
+    <distinctive
+	id="#434234"
+	class="foo"
+	foony="bold"
+    ><fooxy>tag</fooxy></distinctive>
+    <Foo><bar><baz>inside</baz>here</bar>there</Foo>
+    <suffix:foo bar="nono"/>
+    <bar><baz alt="true">second</baz></bar>
+
+    </MissingOpeningTag>
+    <<doubled up>>
+</root>
