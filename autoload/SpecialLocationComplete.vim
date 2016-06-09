@@ -12,8 +12,9 @@
 "
 " REVISION	DATE		REMARKS
 "   1.00.003	19-Feb-2015	Support a:options.emptyBasePattern.
-"				Add SpecialLocationComplete#SetKey() for
-"				testing. Allow passing a key to
+"				Add SpecialLocationComplete#SetKey() and
+"				SpecialLocationComplete#GetKey() for testing.
+"				Allow passing a key to
 "				SpecialLocationComplete#Expr() to enable custom
 "				direct mappings.
 "   1.00.002	16-Feb-2015	Need to get repeat...Expr from a:options; there
@@ -94,6 +95,15 @@ endfunction
 function! s:ExpandTemplate( template, value, ... )
     return substitute(a:template, '%' . (a:0 ? '[sS]' : 's'), "\\='\\V' . (a:0 && submatch(0) ==# '%S' ? a:1 : a:value) . '\\m'", 'g')
 endfunction
+function! SpecialLocationComplete#GetKey()
+    call inputsave()
+	let l:key = ingo#query#get#Char()
+    call inputrestore()
+    return l:key
+endfunction
+function! SpecialLocationComplete#SetKey( key )
+    let s:key = a:key
+endfunction
 let s:repeatCnt = 0
 function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
     if ! exists('s:key')
@@ -101,9 +111,7 @@ function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
 	    return -1
 	endif
 
-	call inputsave()
-	    let s:key = ingo#query#get#Char()
-	call inputrestore()
+	let s:key = SpecialLocationComplete#GetKey()
 
 	if a:findstart
 	    " Invoked by CompleteHelper#Repeat#TestForRepeat(); continue to
@@ -204,9 +212,6 @@ function! SpecialLocationComplete#Expr( ... )
     endif
 
     return "\<C-x>\<C-u>"
-endfunction
-function! SpecialLocationComplete#SetKey( key )
-    let s:key = a:key
 endfunction
 
 let &cpo = s:save_cpo
