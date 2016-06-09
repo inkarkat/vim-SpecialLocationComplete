@@ -5,7 +5,7 @@
 "   - Complete/Repeat.vim autoload script
 "   - ingo/query/get.vim autoload script
 "
-" Copyright: (C) 2015 Ingo Karkat
+" Copyright: (C) 2015-2016 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
