@@ -11,6 +11,12 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.10.004	10-Jun-2016	FIX: CompleteHelper#Repeat#Processor() condenses
+"				a new line and the following indent to a single
+"				space; need to translate that. Otherwise,
+"				repeats using %S in the
+"				a:options.repeatPatternTemplate will not work on
+"				tab-indented or multi-line matches.
 "   1.00.003	19-Feb-2015	Support a:options.emptyBasePattern.
 "				Add SpecialLocationComplete#SetKey() and
 "				SpecialLocationComplete#GetKey() for testing.
@@ -130,9 +136,18 @@ function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
 		return col('.') - 1
 	    else
 		if has_key(l:options, 'repeatPatternTemplate')
+		    let l:previousFullCompleteExpr = escape(s:fullText, '\')
+		    let l:previousAddedCompleteExpr = escape(s:addedText, '\')
+
+		    " CompleteHelper#Repeat#Processor() condenses a new line and
+		    " the following indent to a single space; need to translate
+		    " that. (But only for the added text; the other is kept
+		    " as-is!)
+		    let l:previousAddedCompleteExpr = substitute(l:previousAddedCompleteExpr, '^ ', '\\_s\\+', '')
+
 		    " Need to translate the embedded ^@ newline into the \n atom.
-		    let l:previousFullCompleteExpr = substitute(escape(s:fullText, '\'), '\n', '\\n', 'g')
-		    let l:previousAddedCompleteExpr = substitute(escape(s:addedText, '\'), '\n', '\\n', 'g')
+		    let l:previousFullCompleteExpr = substitute(l:previousFullCompleteExpr, '\n', '\\n', 'g')
+		    let l:previousAddedCompleteExpr = substitute(l:previousAddedCompleteExpr, '\n', '\\n', 'g')
 
 		    let l:repeatPattern = s:ExpandTemplate(l:options.repeatPatternTemplate, l:previousFullCompleteExpr, l:previousAddedCompleteExpr)
 		else
