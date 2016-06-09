@@ -6,7 +6,6 @@ description			|SpecialLocationComplete-description|
 usage				|SpecialLocationComplete-usage|
 installation			|SpecialLocationComplete-installation|
 configuration			|SpecialLocationComplete-configuration|
-integration			|SpecialLocationComplete-integration|
 limitations			|SpecialLocationComplete-limitations|
 known problems			|SpecialLocationComplete-known-problems|
 todo				|SpecialLocationComplete-todo|
@@ -53,7 +52,8 @@ The plugin ships with the following global default completions:
 CTRL-X CTRL-X t		Find pure tag names (without attributes and the
 			surrounding <...>) in opening and closing tags.
 CTRL-X CTRL-X T		Find complete tags (everything inside and including
-			the <...>).
+			the <...>). Further use will copy following complete
+			tags (without text in between).
 
 ==============================================================================
 INSTALLATION				*SpecialLocationComplete-installation*
@@ -128,9 +128,6 @@ If you want to use a different mapping, map your keys to the
     imap <C-x><C-x> <Plug>(SpecialLocationComplete)
 <
 ==============================================================================
-INTEGRATION				 *SpecialLocationComplete-integration*
-
-==============================================================================
 LIMITATIONS				 *SpecialLocationComplete-limitations*
 
 KNOWN PROBLEMS			      *SpecialLocationComplete-known-problems*
@@ -142,7 +139,7 @@ IDEAS					       *SpecialLocationComplete-ideas*
 ==============================================================================
 HISTORY					     *SpecialLocationComplete-history*
 
-GOAL
+1.00	24-Feb-2015
 First published version.
 
 0.01	13-Feb-2015
