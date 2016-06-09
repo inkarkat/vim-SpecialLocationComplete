@@ -10,6 +10,10 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.00.003	19-Feb-2015	Tweak default tagname configuration to also
+"				consider closing tags, and complete only the
+"				tagname without leading < when that isn't part
+"				of the base.
 "   1.00.002	16-Feb-2015	Add another default pattern for tagname.
 "				Simplify base pattern; it doesn't need to match.
 "	001	13-Feb-2015	file creation
@@ -28,8 +32,8 @@ if ! exists('g:SpecialLocationCompletions')
     let g:SpecialLocationCompletions = {
     \   't': {
     \       'description': 'tagname',
-    \       'base': '<\%([[:alpha:]_:]\|[^\x00-\x7F]\)\%([-._:[:alnum:]]\|[^\x00-\x7F]\)*\%#',
-    \       'patternTemplate': '<<\@!\&<\?%s\%([-._:[:alnum:]]\|[^\x00-\x7F]\)\+',
+    \       'base': '\%(</\?\)\?\zs\%([[:alpha:]_:]\|[^\x00-\x7F]\)\%([-._:[:alnum:]]\|[^\x00-\x7F]\)*\%#',
+    \       'patternTemplate': '</\?\zs%s\%([-._:[:alnum:]]\|[^\x00-\x7F]\)\+',
     \       'repeatAnchorExpr': '',
     \   },
     \   'T': {
