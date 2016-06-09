@@ -10,8 +10,9 @@
 	foony="bold"
     ><fooxy>tag</fooxy></distinctive>
     <Foo><bar><baz>inside</baz>here</bar>there</Foo>
-    <suffix:foo bar="nono"/>
+    <suffix:foo bar='nono'/>
     <bar><baz alt="true">second</baz></bar>
+    <atr wrap=off><atr alt="false" nowrap>second</atr></atr>
 
     </MissingOpeningTag>
     <<doubled up>>
