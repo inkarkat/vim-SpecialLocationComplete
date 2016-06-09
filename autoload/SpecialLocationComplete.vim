@@ -17,6 +17,8 @@
 "				repeats using %S in the
 "				a:options.repeatPatternTemplate will not work on
 "				tab-indented or multi-line matches.
+"				ENH: Support multiple keys for triggering a
+"				special completion.
 "   1.00.003	19-Feb-2015	Support a:options.emptyBasePattern.
 "				Add SpecialLocationComplete#SetKey() and
 "				SpecialLocationComplete#GetKey() for testing.
@@ -55,16 +57,15 @@ endfunction
 function! s:CreateHint( key )
     return [a:key, get(s:GetConfig(a:key)[1], 'description', '')]
 endfunction
-function! s:PrintAvailableKeys()
-    let l:keys = s:GetAllConfigKeys()
-    if empty(l:keys)
+function! s:PrintAvailableKeys( keys )
+    if empty(a:keys)
 	return 0
     endif
 
     echohl ModeMsg
     echo '-- Special location completion:'
 
-    for [l:key, l:description] in map(l:keys, 's:CreateHint(v:val)')
+    for [l:key, l:description] in map(copy(a:keys), 's:CreateHint(v:val)')
 	if empty(l:description)
 	    echon ' ' . l:key
 	else
@@ -101,11 +102,30 @@ endfunction
 function! s:ExpandTemplate( template, value, ... )
     return substitute(a:template, '%' . (a:0 ? '[sS]' : 's'), "\\='\\V' . (a:0 && submatch(0) ==# '%S' ? a:1 : a:value) . '\\m'", 'g')
 endfunction
-function! SpecialLocationComplete#GetKey()
-    call inputsave()
-	let l:key = ingo#query#get#Char()
-    call inputrestore()
-    return l:key
+function! SpecialLocationComplete#GetKey( availableKeys )
+    let l:key = ''
+
+    while 1
+	call inputsave()
+	    let l:keypress = ingo#query#get#Char()
+	call inputrestore()
+
+	if empty(l:keypress)
+	    " Abort.
+	    return ''
+	endif
+	let l:key .= l:keypress
+	if index(a:availableKeys, l:key) != -1
+	    return l:key
+	endif
+	let l:applicableKeys = filter(copy(a:availableKeys), 'ingo#str#StartsWith(v:val, l:key)')
+	if empty(l:applicableKeys)
+	    " No such key.
+	    return ''
+	endif
+
+	call s:PrintAvailableKeys(l:applicableKeys)
+    endwhile
 endfunction
 function! SpecialLocationComplete#SetKey( key )
     let s:key = a:key
@@ -113,11 +133,12 @@ endfunction
 let s:repeatCnt = 0
 function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
     if ! exists('s:key')
-	if ! s:PrintAvailableKeys()
+	let l:keys = s:GetAllConfigKeys()
+	if ! s:PrintAvailableKeys(l:keys)
 	    return -1
 	endif
 
-	let s:key = SpecialLocationComplete#GetKey()
+	let s:key = SpecialLocationComplete#GetKey(l:keys)
 
 	if a:findstart
 	    " Invoked by CompleteHelper#Repeat#TestForRepeat(); continue to
