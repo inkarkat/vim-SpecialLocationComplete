@@ -54,6 +54,7 @@ CTRL-X CTRL-X t		Find pure tag names (without attributes and the
 CTRL-X CTRL-X T		Find complete tags (everything inside and including
 			the <...>). Further use will copy following complete
 			tags (without text in between).
+CTRL-X CTRL-X CTRL-T	Find tag attributes (name="value") in tags.
 
 ==============================================================================
 INSTALLATION				*SpecialLocationComplete-installation*
@@ -116,6 +117,8 @@ explains their use: >
     \       'repeatAnchorExpr': '\<',
     \       'repeatPositiveExpr': '\k',
     \       'repeatNegativeExpr': '\%(\k\@!\.\)',
+<		Note: You can't mix-and-match here, if you want to override
+		repeatNegativeExpr, you also need to specify the previous ones! >
     \	}
     \}
 In addition, any other a:options from CompleteHelper#FindMatches() can be
@@ -139,6 +142,14 @@ IDEAS					       *SpecialLocationComplete-ideas*
 ==============================================================================
 HISTORY					     *SpecialLocationComplete-history*
 
+1.10	RELEASEME
+- FIX: CompleteHelper#Repeat#Processor() condenses a new line and the
+  following indent to a single space; need to translate that. Otherwise,
+  repeats using %S in the a:options.repeatPatternTemplate will not work on
+  tab-indented or multi-line matches.
+- ENH: Add new <C-t> default completion of full tag attributes (e.g. <tag
+  foo="bar">).
+
 1.00	24-Feb-2015
 First published version.
 
@@ -146,7 +157,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2015 Ingo Karkat
+Copyright: (C) 2015-2016 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
