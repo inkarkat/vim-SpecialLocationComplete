@@ -20,6 +20,9 @@
 "				Also print chosen completion after it has been
 "				queried so that the last typing hint does not
 "				remain on the screen, which is confusing.
+"				Refactoring: Make s:GetAllConfigKeys() return
+"				the entire configuration as s:GetConfig(), and
+"				obsolete s:GetConfig(key), s:GetOptions().
 "   1.10.004	10-Jun-2016	FIX: CompleteHelper#Repeat#Processor() condenses
 "				a new line and the following indent to a single
 "				space; need to translate that. Otherwise,
@@ -46,33 +49,32 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! s:GetConfig( key )
-    if exists('w:SpecialLocationCompletions') && has_key(w:SpecialLocationCompletions, a:key)
-	return ['w', w:SpecialLocationCompletions[a:key]]
-    elseif exists('b:SpecialLocationCompletions') && has_key(b:SpecialLocationCompletions, a:key)
-	return ['b', b:SpecialLocationCompletions[a:key]]
-    elseif exists('g:SpecialLocationCompletions') && has_key(g:SpecialLocationCompletions, a:key)
-	return ['g', g:SpecialLocationCompletions[a:key]]
-    else
-	return ['', {}]
-    endif
-endfunction
-function! s:GetAllConfigKeys()
-    let l:keys = []
-    for l:key in
-    \   (exists('w:SpecialLocationCompletions') ? keys(w:SpecialLocationCompletions) : []) +
-    \   (exists('b:SpecialLocationCompletions') ? keys(b:SpecialLocationCompletions) : []) +
-    \   (exists('g:SpecialLocationCompletions') ? keys(g:SpecialLocationCompletions) : [])
-	if index(l:keys, l:key) == -1
-	    call add(l:keys, l:key)
-	endif
+function! s:SetDefaultComplete( config, defaultCompleteValue )
+    for [l:key, l:options] in items(a:config)
+	let l:options.complete = get(l:options, 'complete', a:defaultCompleteValue)
     endfor
-    return l:keys
 endfunction
-function! s:CreateHint( key )
-    return [a:key, get(s:GetConfig(a:key)[1], 'description', '')]
+function! s:GetConfig()
+    let l:config = {}
+    if exists('w:SpecialLocationCompletions')
+	call extend(l:config, w:SpecialLocationCompletions, 'keep')
+	call s:SetDefaultComplete(l:config, '.,w')
+    endif
+    if exists('b:SpecialLocationCompletions')
+	call extend(l:config, b:SpecialLocationCompletions, 'keep')
+	call s:SetDefaultComplete(l:config, '.')
+    endif
+    if exists('g:SpecialLocationCompletions')
+	call extend(l:config, g:SpecialLocationCompletions, 'keep')
+	call s:SetDefaultComplete(l:config, &complete)
+    endif
+
+    return l:config
 endfunction
-function! s:PrintAvailableKeys( keys, typedKey )
+function! s:CreateHint( config, key )
+    return [a:key, get(a:config[a:key], 'description', '')]
+endfunction
+function! s:PrintAvailableKeys( config, keys, typedKey )
     if empty(a:keys)
 	return 0
     endif
@@ -80,7 +82,7 @@ function! s:PrintAvailableKeys( keys, typedKey )
     echohl ModeMsg
     echo '-- Special location completion:'
 
-    for [l:key, l:description] in map(copy(a:keys), 's:CreateHint(v:val)')
+    for [l:key, l:description] in map(copy(a:keys), 's:CreateHint(a:config, v:val)')
 	let l:keyWithTypeHint = (empty(a:typedKey) ?
 	\   l:key :
 	\   substitute(l:key, '\C\V\^\(' . escape(a:typedKey, '\') . '\)\(\.\+\)\$', '\1[\2]', '')
@@ -100,29 +102,10 @@ function! s:PrintAvailableKeys( keys, typedKey )
     return 1
 endfunction
 
-function! s:GetOptions()
-    let [l:scope, l:options] = s:GetConfig(s:key)
-    if empty(l:options)
-	throw 'SpecialLocationComplete: No such key'
-    elseif ! has_key(l:options, 'complete')
-	" Default to a completion scope that corresponds to the config scope.
-	if l:scope ==# 'w'
-	    let l:options.complete = '.,w'
-	elseif l:scope ==# 'b'
-	    let l:options.complete = '.'
-	elseif l:scope ==# 'g'
-	    let l:options.complete = &complete
-	else
-	    throw 'ASSERT: Unknown scope: ' . string(l:scope)
-	endif
-    endif
-
-    return l:options
-endfunction
 function! s:ExpandTemplate( template, value, ... )
     return substitute(a:template, '%' . (a:0 ? '[sS]' : 's'), "\\='\\V' . (a:0 && submatch(0) ==# '%S' ? a:1 : a:value) . '\\m'", 'g')
 endfunction
-function! SpecialLocationComplete#GetKey( availableKeys )
+function! SpecialLocationComplete#GetKey( config )
     let l:key = ''
 
     while 1
@@ -135,17 +118,17 @@ function! SpecialLocationComplete#GetKey( availableKeys )
 	    return ''
 	endif
 	let l:key .= l:keypress
-	if index(a:availableKeys, l:key) != -1
-	    call s:PrintAvailableKeys([l:key], '')
+	if has_key(a:config, l:key)
+	    call s:PrintAvailableKeys(a:config, [l:key], '')
 	    return l:key
 	endif
-	let l:applicableKeys = filter(copy(a:availableKeys), 'ingo#str#StartsWith(v:val, l:key)')
+	let l:applicableKeys = filter(keys(a:config), 'ingo#str#StartsWith(v:val, l:key)')
 	if empty(l:applicableKeys)
 	    " No such key.
 	    return ''
 	endif
 
-	call s:PrintAvailableKeys(l:applicableKeys, l:key)
+	call s:PrintAvailableKeys(a:config, l:applicableKeys, l:key)
     endwhile
 endfunction
 function! SpecialLocationComplete#SetKey( key )
@@ -153,13 +136,13 @@ function! SpecialLocationComplete#SetKey( key )
 endfunction
 let s:repeatCnt = 0
 function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
+    let l:config = s:GetConfig()
     if ! exists('s:key')
-	let l:keys = s:GetAllConfigKeys()
-	if ! s:PrintAvailableKeys(l:keys, '')
+	if ! s:PrintAvailableKeys(l:config, keys(l:config), '')
 	    return -1
 	endif
 
-	let s:key = SpecialLocationComplete#GetKey(l:keys)
+	let s:key = SpecialLocationComplete#GetKey(l:config)
 
 	if a:findstart
 	    " Invoked by CompleteHelper#Repeat#TestForRepeat(); continue to
@@ -171,7 +154,7 @@ function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
     endif
 
     try
-	let l:options = s:GetOptions()
+	let l:options = l:config[s:key]
 
 	if s:repeatCnt
 	    if a:findstart
