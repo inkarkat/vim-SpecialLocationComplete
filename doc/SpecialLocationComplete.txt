@@ -42,7 +42,7 @@ In insert mode, invoke the alphabetic completion via CTRL-X CTRL-X; you will
 then be prompted for another key that selects the particular completion.
 You can then search forward and backward via CTRL-N / CTRL-P, as usual.
 							     *i_CTRL-X_CTRL-X*
-CTRL-X CTRL-X {key}	Find special matches configured for {key} (see
+CTRL-X CTRL-X {key}[...]Find special matches configured for {key}[...] (see
 			|g:SpecialLocationCompletions|).
 			Further use of CTRL-X CTRL-X will copy additional text
 			(what exactly is customizable, too).
@@ -55,6 +55,11 @@ CTRL-X CTRL-X T		Find complete tags (everything inside and including
 			the <...>). Further use will copy following complete
 			tags (without text in between).
 CTRL-X CTRL-X CTRL-T	Find tag attributes (name="value") in tags.
+CTRL-X CTRL-X it	Text between arbitrary tags (<...>text here</...>),
+			starting with the base. If none is found, do a relaxed
+			search for the base anywhere between arbitrary tags.
+			Unlike the |it| text object, the surrounding tags need
+			not match; they can be _any_ opening or closing tags!
 
 ==============================================================================
 INSTALLATION				*SpecialLocationComplete-installation*
@@ -85,13 +90,14 @@ For a permanent configuration, put the following commands into your |vimrc|:
 This completion can provide an arbitrary number of special completions; these
 can be available globally, or only in particular buffers or windows. Each
 completion is defined by a configuration object under a (correspondingly
-scoped) Dictionary; the key is the single character that must be typed after
-the |i_CTRL-X_CTRL-X| completion mapping. The following example shows the
-defaults (which are modeled after the built-in keyword completion), and
-explains their use: >
+scoped) Dictionary; the key is the (sequence of) character(s) that must be
+typed after the |i_CTRL-X_CTRL-X| completion mapping. The following example
+shows the defaults (which are modeled after the built-in keyword completion),
+and explains their use: >
     let g:SpecialLocationCompletions = {
     \	'k': {
-<	The (single!) key (after |i_CTRL-X_CTRL-X|) to invoke. >
+<	The key(s) (after |i_CTRL-X_CTRL-X|) to invoke. No |key-notation|
+	supported; i.e. use ^T (as a single char) for <C-t>. >
     \	    'description': 'keywords',
 <		An (optional) explanation appended to the key in the prompt. >
     \	    'complete': '.,w,b,u'
@@ -103,10 +109,13 @@ explains their use: >
 <		The pattern to locate the completion base (before the cursor). >
     \       'patternTemplate': '\<%s\k\+',
 <		With the base inserted at "%s", yields the pattern used to
-		search for completions. >
+		search for completions. Can also be a List of pattern
+		templates; these are then searched sequentially until one
+		pattern yields matches. >
     \	    'emptyBasePattern': '',
 <		Optional alternative pattern to 'patternTemplate' that is used
-		when there's no base. >
+		when there's no base. Can also be a List; these are then
+		searched sequentially until one pattern yields matches. >
     \       'repeatPatternTemplate': '%s\zs\s*\k\+',
 <		When repeating the completion, yields the pattern to search
 		for completions. "%s" is replaced with the full completion,
@@ -149,6 +158,11 @@ HISTORY					     *SpecialLocationComplete-history*
   tab-indented or multi-line matches.
 - ENH: Add new <C-t> default completion of full tag attributes (e.g. <tag
   foo="bar">).
+- ENH: Support Lists of a:options.patternTemplate and
+  a:options.emptyBasePattern; these are searched sequentially until one yields
+  matches. This allows fallbacks, e.g. a relaxed search anywhere vs. a strict
+  search for base at the beginning.
+- ENH: Add new it default completion for text between tags.
 
 1.00	24-Feb-2015
 First published version.
