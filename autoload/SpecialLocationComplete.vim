@@ -12,6 +12,14 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.10.005	13-Jun-2016	ENH: Visualize remaining keys to be typed by
+"				bracketing with [...] in s:PrintAvailableKeys().
+"				Otherwise, if there's only a single match but
+"				multiple keys remaining, there's no progress
+"				indication.
+"				Also print chosen completion after it has been
+"				queried so that the last typing hint does not
+"				remain on the screen, which is confusing.
 "   1.10.004	10-Jun-2016	FIX: CompleteHelper#Repeat#Processor() condenses
 "				a new line and the following indent to a single
 "				space; need to translate that. Otherwise,
@@ -52,9 +60,9 @@ endfunction
 function! s:GetAllConfigKeys()
     let l:keys = []
     for l:key in
-    \   (exists('w:SpecialLocationCompletions') ? sort(keys(w:SpecialLocationCompletions)) : []) +
-    \   (exists('b:SpecialLocationCompletions') ? sort(keys(b:SpecialLocationCompletions)) : []) +
-    \   (exists('g:SpecialLocationCompletions') ? sort(keys(g:SpecialLocationCompletions)) : [])
+    \   (exists('w:SpecialLocationCompletions') ? keys(w:SpecialLocationCompletions) : []) +
+    \   (exists('b:SpecialLocationCompletions') ? keys(b:SpecialLocationCompletions) : []) +
+    \   (exists('g:SpecialLocationCompletions') ? keys(g:SpecialLocationCompletions) : [])
 	if index(l:keys, l:key) == -1
 	    call add(l:keys, l:key)
 	endif
@@ -64,7 +72,7 @@ endfunction
 function! s:CreateHint( key )
     return [a:key, get(s:GetConfig(a:key)[1], 'description', '')]
 endfunction
-function! s:PrintAvailableKeys( keys )
+function! s:PrintAvailableKeys( keys, typedKey )
     if empty(a:keys)
 	return 0
     endif
@@ -73,10 +81,15 @@ function! s:PrintAvailableKeys( keys )
     echo '-- Special location completion:'
 
     for [l:key, l:description] in map(copy(a:keys), 's:CreateHint(v:val)')
+	let l:keyWithTypeHint = (empty(a:typedKey) ?
+	\   l:key :
+	\   substitute(l:key, '\C\V\^\(' . escape(a:typedKey, '\') . '\)\(\.\+\)\$', '\1[\2]', '')
+	\)
+
 	if empty(l:description)
-	    echon ' ' . l:key
+	    echon ' ' . l:keyWithTypeHint
 	else
-	    echon ' ' . l:key
+	    echon ' ' . l:keyWithTypeHint
 	    echohl None
 	    echon '(' . l:description . ')'
 	    echohl ModeMsg
@@ -123,6 +136,7 @@ function! SpecialLocationComplete#GetKey( availableKeys )
 	endif
 	let l:key .= l:keypress
 	if index(a:availableKeys, l:key) != -1
+	    call s:PrintAvailableKeys([l:key], '')
 	    return l:key
 	endif
 	let l:applicableKeys = filter(copy(a:availableKeys), 'ingo#str#StartsWith(v:val, l:key)')
@@ -131,7 +145,7 @@ function! SpecialLocationComplete#GetKey( availableKeys )
 	    return ''
 	endif
 
-	call s:PrintAvailableKeys(l:applicableKeys)
+	call s:PrintAvailableKeys(l:applicableKeys, l:key)
     endwhile
 endfunction
 function! SpecialLocationComplete#SetKey( key )
@@ -141,7 +155,7 @@ let s:repeatCnt = 0
 function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
     if ! exists('s:key')
 	let l:keys = s:GetAllConfigKeys()
-	if ! s:PrintAvailableKeys(l:keys)
+	if ! s:PrintAvailableKeys(l:keys, '')
 	    return -1
 	endif
 
