@@ -1,3 +1,3 @@
-function! SpecialLocationComplete#GetKey()
+function! SpecialLocationComplete#GetKey( availableKeys )
     return g:key
 endfunction
