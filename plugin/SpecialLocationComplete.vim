@@ -12,6 +12,8 @@
 " REVISION	DATE		REMARKS
 "   1.10.004	10-Jun-2016	ENH: Add new <C-t> default completion of full
 "				tag attributes (e.g. <tag foo="bar">).
+"				ENH: Add new it default completion for text
+"				between tags.
 "   1.00.003	19-Feb-2015	Tweak default tagname configuration to also
 "				consider closing tags, and complete only the
 "				tagname without leading < when that isn't part
@@ -51,11 +53,17 @@ if ! exists('g:SpecialLocationCompletions')
     \       'emptyBasePattern': '\%(\%(<\_[^>]*\%(\s\+[a-zA-Z:_][-.0-9a-zA-Z:_]*\%(=\([''"]\).\{-\}\1\)\?\)*\s\+\)\@<=\|\%(\n\s*\)\@<=\)\%([a-zA-Z:_][-.0-9a-zA-Z:_]*\%(=\([''"]\).\{-\}\1\)\?\)\ze\%(\_s\|/\?>\)',
     \       'repeatPatternTemplate': '%S\zs\_s\+\%([a-zA-Z:_][-.0-9a-zA-Z:_]*\%(=\([''"]\).\{-\}\1\)\?\)\ze\%(\_s\|/\?>\)',
     \   },
+    \   'it': {
+    \       'description': 'between tags',
+    \       'base': '\%(>\zs[^<>]*\|\k*\)\%#',
+    \       'patternTemplate': ['>\zs%s\_[^<>]\{-}\%(\S\&[^<>]\)\_[^<>]*\ze<', '>\zs\_[^<>]\{-1,}%s\_[^<>]*\ze<'],
+    \       'repeatPatternTemplate': '%s\zs<\_[^>]\+>\_[^<>]\{-}\%(\S\&[^<>]\)\_[^<>]*\ze<',
+    \   },
     \}
-    " <C-t> emptyBasePattern: The \@<= only looks behind _one_ additional line;
-    " in order to also capture attributes on further lines, we need the
-    " alternative branch that only checks for \n\s* instead of looking back to
-    " the tag start.
+    " ^T emptyBasePattern: The \@<= only looks behind _one_ additional line; in
+    " order to also capture attributes on further lines, we need the alternative
+    " branch that only checks for \n\s* instead of looking back to the tag
+    " start.
 endif
 
 
