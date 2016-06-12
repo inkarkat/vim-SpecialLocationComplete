@@ -3,6 +3,7 @@
 " DEPENDENCIES:
 "   - CompleteHelper.vim autoload script
 "   - Complete/Repeat.vim autoload script
+"   - ingo/list.vim autoload script
 "   - ingo/query/get.vim autoload script
 "
 " Copyright: (C) 2015-2016 Ingo Karkat
@@ -19,6 +20,12 @@
 "				tab-indented or multi-line matches.
 "				ENH: Support multiple keys for triggering a
 "				special completion.
+"				ENH: Support Lists of a:options.patternTemplate
+"				and a:options.emptyBasePattern; these are
+"				searched sequentially until one yields matches.
+"				This allows fallbacks, e.g. a relaxed search
+"				anywhere vs. a strict search for base at the
+"				beginning.
 "   1.00.003	19-Feb-2015	Support a:options.emptyBasePattern.
 "				Add SpecialLocationComplete#SetKey() and
 "				SpecialLocationComplete#GetKey() for testing.
@@ -210,13 +217,36 @@ function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
 	    return l:startCol - 1 " Return byte index, not column.
 	else
 	    " Find matches.
-	    let l:pattern = (empty(a:base) && has_key(l:options, 'emptyBasePattern') ?
-	    \   get(l:options, 'emptyBasePattern') :
-	    \   s:ExpandTemplate(get(l:options, 'patternTemplate', '\<%s\k\+'), escape(a:base, '\'))
+	    let l:isSpecialEmptyBasePattern = (empty(a:base) && has_key(l:options, 'emptyBasePattern'))
+	    let l:rawPatterns = ingo#list#Make(
+	    \   (l:isSpecialEmptyBasePattern ?
+	    \       get(l:options, 'emptyBasePattern') :
+	    \       get(l:options, 'patternTemplate', '\<%s\k\+')
+	    \   ),
+	    \   1
 	    \)
 
 	    let l:matches = []
-	    call CompleteHelper#FindMatches(l:matches, l:pattern, l:options)
+	    let l:fallbackCnt = 0
+	    while ! empty(l:rawPatterns)
+		if l:fallbackCnt > 0
+		    echohl ModeMsg
+		    echo printf('-- User defined completion (^U^N^P) -- Fallback%s search...', (l:fallbackCnt > 1 ? ' ' . l:fallbackCnt : ''))
+		    echohl None
+		endif
+
+		let l:pattern = remove(l:rawPatterns, 0)
+		if ! l:isSpecialEmptyBasePattern
+		    let l:pattern =  s:ExpandTemplate(l:pattern, escape(a:base, '\'))
+		endif
+
+		call CompleteHelper#FindMatches(l:matches, l:pattern, l:options)
+		if ! empty(l:matches)
+		    break
+		endif
+
+		let l:fallbackCnt += 1
+	    endwhile
 	    return l:matches
 	endif
     catch /^SpecialLocationComplete:/
