@@ -98,6 +98,9 @@ and explains their use: >
     \	'k': {
 <	The key(s) (after |i_CTRL-X_CTRL-X|) to invoke. No |key-notation|
 	supported; i.e. use ^T (as a single char) for <C-t>. >
+    \	    'priority': 1000,
+<		Number that influences the position of the completion in the
+		printed hints; lower numbers appear first. >
     \	    'description': 'keywords',
 <		An (optional) explanation appended to the key in the prompt. >
     \	    'complete': '.,w,b,u'
@@ -163,6 +166,8 @@ HISTORY					     *SpecialLocationComplete-history*
   matches. This allows fallbacks, e.g. a relaxed search anywhere vs. a strict
   search for base at the beginning.
 - ENH: Add new it default completion for text between tags.
+- ENH: Add default completions for decimal and hexadecimal numbers, UUIDs.
+- ENH: Support sorting of completions via a:options.priority.
 
 1.00	24-Feb-2015
 First published version.
