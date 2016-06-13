@@ -10,7 +10,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
-"   1.10.005	13-Jun-2016	ENH: Add default completions for decimal and
+"   2.00.005	13-Jun-2016	ENH: Add default completions for decimal and
 "				hexadecimal numbers, UUIDs.
 "				ENH: Support sorting of completions via
 "				a:options.priority.
