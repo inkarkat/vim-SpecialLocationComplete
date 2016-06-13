@@ -22,7 +22,19 @@
 "				remain on the screen, which is confusing.
 "				Refactoring: Make s:GetAllConfigKeys() return
 "				the entire configuration as s:GetConfig(), and
-"				obsolete s:GetConfig(key), s:GetOptions().
+"				obsolete s:GetConfig(key), s:GetOptions(). No
+"				such key is now handled by directly checking the
+"				configuration for the key, not by throwing
+"				"SpecialLocationComplete: No such key"
+"				exception.
+"				Refactoring: Resolve the current configuration
+"				only one per SpecialLocationComplete#Expr() to
+"				avoid re-computation on each invocation of the
+"				completion function. I also need the config in
+"				scope for the new s:SortByConfigPriority()
+"				sorting function.
+"				ENH: Support sorting of completions via
+"				a:options.priority.
 "   1.10.004	10-Jun-2016	FIX: CompleteHelper#Repeat#Processor() condenses
 "				a new line and the following indent to a single
 "				space; need to translate that. Otherwise,
@@ -71,10 +83,15 @@ function! s:GetConfig()
 
     return l:config
 endfunction
-function! s:CreateHint( config, key )
-    return [a:key, get(a:config[a:key], 'description', '')]
+function! s:SortByConfigPriority( k1, k2 )
+    let l:p1 = get(s:config[a:k1], 'priority', 0)
+    let l:p2 = get(s:config[a:k2], 'priority', 1)
+    return (l:p1 ==# l:p2 ? 0 : l:p1 ># l:p2 ? 1 : -1)
 endfunction
-function! s:PrintAvailableKeys( config, keys, typedKey )
+function! s:CreateHint( key )
+    return [a:key, get(s:config[a:key], 'description', '')]
+endfunction
+function! s:PrintAvailableKeys( keys, typedKey )
     if empty(a:keys)
 	return 0
     endif
@@ -82,7 +99,7 @@ function! s:PrintAvailableKeys( config, keys, typedKey )
     echohl ModeMsg
     echo '-- Special location completion:'
 
-    for [l:key, l:description] in map(copy(a:keys), 's:CreateHint(a:config, v:val)')
+    for [l:key, l:description] in map(sort(copy(a:keys), 's:SortByConfigPriority'), 's:CreateHint(v:val)')
 	let l:keyWithTypeHint = (empty(a:typedKey) ?
 	\   l:key :
 	\   substitute(l:key, '\C\V\^\(' . escape(a:typedKey, '\') . '\)\(\.\+\)\$', '\1[\2]', '')
@@ -119,7 +136,7 @@ function! SpecialLocationComplete#GetKey( config )
 	endif
 	let l:key .= l:keypress
 	if has_key(a:config, l:key)
-	    call s:PrintAvailableKeys(a:config, [l:key], '')
+	    call s:PrintAvailableKeys([l:key], '')
 	    return l:key
 	endif
 	let l:applicableKeys = filter(keys(a:config), 'ingo#str#StartsWith(v:val, l:key)')
@@ -128,21 +145,21 @@ function! SpecialLocationComplete#GetKey( config )
 	    return ''
 	endif
 
-	call s:PrintAvailableKeys(a:config, l:applicableKeys, l:key)
+	call s:PrintAvailableKeys(l:applicableKeys, l:key)
     endwhile
 endfunction
 function! SpecialLocationComplete#SetKey( key )
     let s:key = a:key
+    let s:config = s:GetConfig()
 endfunction
 let s:repeatCnt = 0
 function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
-    let l:config = s:GetConfig()
     if ! exists('s:key')
-	if ! s:PrintAvailableKeys(l:config, keys(l:config), '')
+	if ! s:PrintAvailableKeys(keys(s:config), '')
 	    return -1
 	endif
 
-	let s:key = SpecialLocationComplete#GetKey(l:config)
+	let s:key = SpecialLocationComplete#GetKey(s:config)
 
 	if a:findstart
 	    " Invoked by CompleteHelper#Repeat#TestForRepeat(); continue to
@@ -153,105 +170,105 @@ function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
 	endif
     endif
 
-    try
-	let l:options = l:config[s:key]
+    if ! has_key(s:config, s:key)
+	return -1
+    endif
+    let l:options = s:config[s:key]
 
-	if s:repeatCnt
-	    if a:findstart
-		return col('.') - 1
+    if s:repeatCnt
+	if a:findstart
+	    return col('.') - 1
+	else
+	    if has_key(l:options, 'repeatPatternTemplate')
+		let l:previousFullCompleteExpr = escape(s:fullText, '\')
+		let l:previousAddedCompleteExpr = escape(s:addedText, '\')
+
+		" CompleteHelper#Repeat#Processor() condenses a new line and
+		" the following indent to a single space; need to translate
+		" that. (But only for the added text; the other is kept
+		" as-is!)
+		let l:previousAddedCompleteExpr = substitute(l:previousAddedCompleteExpr, '^ ', '\\_s\\+', '')
+
+		" Need to translate the embedded ^@ newline into the \n atom.
+		let l:previousFullCompleteExpr = substitute(l:previousFullCompleteExpr, '\n', '\\n', 'g')
+		let l:previousAddedCompleteExpr = substitute(l:previousAddedCompleteExpr, '\n', '\\n', 'g')
+
+		let l:repeatPattern = s:ExpandTemplate(l:options.repeatPatternTemplate, l:previousFullCompleteExpr, l:previousAddedCompleteExpr)
 	    else
-		if has_key(l:options, 'repeatPatternTemplate')
-		    let l:previousFullCompleteExpr = escape(s:fullText, '\')
-		    let l:previousAddedCompleteExpr = escape(s:addedText, '\')
-
-		    " CompleteHelper#Repeat#Processor() condenses a new line and
-		    " the following indent to a single space; need to translate
-		    " that. (But only for the added text; the other is kept
-		    " as-is!)
-		    let l:previousAddedCompleteExpr = substitute(l:previousAddedCompleteExpr, '^ ', '\\_s\\+', '')
-
-		    " Need to translate the embedded ^@ newline into the \n atom.
-		    let l:previousFullCompleteExpr = substitute(l:previousFullCompleteExpr, '\n', '\\n', 'g')
-		    let l:previousAddedCompleteExpr = substitute(l:previousAddedCompleteExpr, '\n', '\\n', 'g')
-
-		    let l:repeatPattern = s:ExpandTemplate(l:options.repeatPatternTemplate, l:previousFullCompleteExpr, l:previousAddedCompleteExpr)
-		else
-		    let l:repeatPatternArguments = [s:fullText]
-		    if has_key(l:options, 'repeatAnchorExpr')
-			call add(l:repeatPatternArguments, l:options.repeatAnchorExpr)
-			if has_key(l:options, 'repeatPositiveExpr')
-			    call add(l:repeatPatternArguments, l:options.repeatPositiveExpr)
-			    if has_key(l:options, 'repeatNegativeExpr')
-				call add(l:repeatPatternArguments, l:options.repeatNegativeExpr)
-			    endif
+		let l:repeatPatternArguments = [s:fullText]
+		if has_key(l:options, 'repeatAnchorExpr')
+		    call add(l:repeatPatternArguments, l:options.repeatAnchorExpr)
+		    if has_key(l:options, 'repeatPositiveExpr')
+			call add(l:repeatPatternArguments, l:options.repeatPositiveExpr)
+			if has_key(l:options, 'repeatNegativeExpr')
+			    call add(l:repeatPatternArguments, l:options.repeatNegativeExpr)
 			endif
 		    endif
-		    let l:repeatPattern = call('CompleteHelper#Repeat#GetPattern', l:repeatPatternArguments)
 		endif
-
-		let l:options.processor = function('CompleteHelper#Repeat#Processor')
-
-		let l:matches = []
-		call CompleteHelper#FindMatches(l:matches,
-		\   l:repeatPattern,
-		\   l:options
-		\)
-		if empty(l:matches)
-		    call CompleteHelper#Repeat#Clear()
-		endif
-		return l:matches
+		let l:repeatPattern = call('CompleteHelper#Repeat#GetPattern', l:repeatPatternArguments)
 	    endif
-	endif
 
-	if a:findstart
-	    " Locate the start of the configured characters.
-	    let l:base = get(l:options, 'base', '\k\*\%#')
-
-	    let l:startCol = searchpos(l:base, 'bn', line('.'))[1]
-	    if l:startCol == 0
-		let l:startCol = col('.')
-	    endif
-	    return l:startCol - 1 " Return byte index, not column.
-	else
-	    " Find matches.
-	    let l:isSpecialEmptyBasePattern = (empty(a:base) && has_key(l:options, 'emptyBasePattern'))
-	    let l:rawPatterns = ingo#list#Make(
-	    \   (l:isSpecialEmptyBasePattern ?
-	    \       get(l:options, 'emptyBasePattern') :
-	    \       get(l:options, 'patternTemplate', '\<%s\k\+')
-	    \   ),
-	    \   1
-	    \)
+	    let l:options.processor = function('CompleteHelper#Repeat#Processor')
 
 	    let l:matches = []
-	    let l:fallbackCnt = 0
-	    while ! empty(l:rawPatterns)
-		if l:fallbackCnt > 0
-		    echohl ModeMsg
-		    echo printf('-- User defined completion (^U^N^P) -- Fallback%s search...', (l:fallbackCnt > 1 ? ' ' . l:fallbackCnt : ''))
-		    echohl None
-		endif
-
-		let l:pattern = remove(l:rawPatterns, 0)
-		if ! l:isSpecialEmptyBasePattern
-		    let l:pattern =  s:ExpandTemplate(l:pattern, escape(a:base, '\'))
-		endif
-
-		call CompleteHelper#FindMatches(l:matches, l:pattern, l:options)
-		if ! empty(l:matches)
-		    break
-		endif
-
-		let l:fallbackCnt += 1
-	    endwhile
+	    call CompleteHelper#FindMatches(l:matches,
+		\ l:repeatPattern,
+		\ l:options
+	    \)
+	    if empty(l:matches)
+		call CompleteHelper#Repeat#Clear()
+	    endif
 	    return l:matches
 	endif
-    catch /^SpecialLocationComplete:/
-	return -1
-    endtry
+    endif
+
+    if a:findstart
+	" Locate the start of the configured characters.
+	let l:base = get(l:options, 'base', '\k\*\%#')
+
+	let l:startCol = searchpos(l:base, 'bn', line('.'))[1]
+	if l:startCol == 0
+	    let l:startCol = col('.')
+	endif
+	return l:startCol - 1 " Return byte index, not column.
+    else
+	" Find matches.
+	let l:isSpecialEmptyBasePattern = (empty(a:base) && has_key(l:options, 'emptyBasePattern'))
+	let l:rawPatterns = ingo#list#Make(
+	    \	(l:isSpecialEmptyBasePattern ?
+	    \	    get(l:options, 'emptyBasePattern') :
+	    \	    get(l:options, 'patternTemplate', '\<%s\k\+')
+	    \	),
+	    \	1
+	\)
+
+	let l:matches = []
+	let l:fallbackCnt = 0
+	while ! empty(l:rawPatterns)
+	    if l:fallbackCnt > 0
+		echohl ModeMsg
+		echo printf('-- User defined completion (^U^N^P) -- Fallback%s search...', (l:fallbackCnt > 1 ? ' ' . l:fallbackCnt : ''))
+		echohl None
+	    endif
+
+	    let l:pattern = remove(l:rawPatterns, 0)
+	    if ! l:isSpecialEmptyBasePattern
+		let l:pattern =  s:ExpandTemplate(l:pattern, escape(a:base, '\'))
+	    endif
+
+	    call CompleteHelper#FindMatches(l:matches, l:pattern, l:options)
+	    if ! empty(l:matches)
+		break
+	    endif
+
+	    let l:fallbackCnt += 1
+	endwhile
+	return l:matches
+    endif
 endfunction
 
 function! SpecialLocationComplete#Expr( ... )
+    let s:config = s:GetConfig()
     if a:0
 	let s:key = a:1
     else
