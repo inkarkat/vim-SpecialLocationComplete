@@ -4,9 +4,10 @@ set completefunc=SpecialLocationComplete#SpecialLocationComplete
 call SpecialLocationComplete#SetKey('')
 edit tagged.txt
 
-source ../helpers/completetest.vim
+runtime tests/helpers/completetest.vim
 call vimtest#StartTap()
 call vimtap#Plan(15)
+
 call IsMatchesInIsolatedLine('doesnotexist', [], 'no matches for doesnotexist')
 call IsMatchesInIsolatedLine('cription', [], 'no matches for cription')
 call IsMatchesInIsolatedLine('sco', ['scope="really"'], 'match for sco')
@@ -22,4 +23,5 @@ call IsMatchesInIsolatedLine('nowr', ['nowrap'], 'match for nowr')
 call IsMatchesInIsolatedLine('real', [], 'no matches for real')
 call IsMatchesInIsolatedLine('="fal', [], 'no matches for ="fal')
 call IsMatchesInIsolatedLine('', ['alt="false"', 'alt="true"', 'bar=''nono''', 'bar="quux"', 'baz="more"', 'border="2"', 'class="foo"', 'description="lala"', 'foony="bold"', 'id="#434234"', 'nowrap', 'scope="really"', 'up'], 'all matches')
+
 call vimtest#Quit()
