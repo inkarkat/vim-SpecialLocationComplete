@@ -1,6 +1,6 @@
 " Test repeat of tag attribute completion.
 
-source ../helpers/insert.vim
+runtime tests/helpers/insert.vim
 source autoload/SpecialLocationComplete.vim
 view tagged.txt
 new
