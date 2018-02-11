@@ -4,9 +4,10 @@ set completefunc=SpecialLocationComplete#SpecialLocationComplete
 call SpecialLocationComplete#SetKey('it')
 edit tagged.txt
 
-source ../helpers/completetest.vim
+runtime tests/helpers/completetest.vim
 call vimtest#StartTap()
 call vimtap#Plan(8)
+
 call IsMatchesInIsolatedLine('doesnotexist', [], 'no matches for doesnotexist')
 call IsMatchesInIsolatedLine('in', ['inner', 'inside'], 'matches for in')
 call IsMatchesInIsolatedLine('quu', [], 'no matches for quu')
@@ -16,4 +17,5 @@ call IsMatchesInIsolatedLine('', ['here', 'inner', 'inside', 'second', 'some tex
 
 call IsMatchesInIsolatedLine('con', ['second'], 'relaxed match for side')
 call IsMatchesInIsolatedLine('side', ['inside'], 'relaxed match for side')
+
 call vimtest#Quit()
