@@ -12,7 +12,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
-"   1.10.005	13-Jun-2016	ENH: Visualize remaining keys to be typed by
+"   2.00.005	13-Jun-2016	ENH: Visualize remaining keys to be typed by
 "				bracketing with [...] in s:PrintAvailableKeys().
 "				Otherwise, if there's only a single match but
 "				multiple keys remaining, there's no progress
