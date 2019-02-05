@@ -6,7 +6,7 @@
 "   - ingo/list.vim autoload script
 "   - ingo/query/get.vim autoload script
 "
-" Copyright: (C) 2015-2016 Ingo Karkat
+" Copyright: (C) 2015-2019 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -84,9 +84,7 @@ function! s:GetConfig()
     return l:config
 endfunction
 function! s:SortByConfigPriority( k1, k2 )
-    let l:p1 = get(s:config[a:k1], 'priority', 0)
-    let l:p2 = get(s:config[a:k2], 'priority', 1)
-    return (l:p1 ==# l:p2 ? 0 : l:p1 ># l:p2 ? 1 : -1)
+    return ingo#collections#PrioritySort(s:config[a:k1], s:config[a:k2])
 endfunction
 function! s:CreateHint( key )
     return [a:key, get(s:config[a:key], 'description', '')]
