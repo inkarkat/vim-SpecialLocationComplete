@@ -38,7 +38,7 @@ SEE ALSO								     *
 ==============================================================================
 USAGE					       *SpecialLocationComplete-usage*
 
-In insert mode, invoke the alphabetic completion via CTRL-X CTRL-X; you will
+In insert mode, invoke the special completion via CTRL-X CTRL-X; you will
 then be prompted for another key that selects the particular completion.
 You can then search forward and backward via CTRL-N / CTRL-P, as usual.
 							     *i_CTRL-X_CTRL-X*
@@ -183,7 +183,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2015-2016 Ingo Karkat
+Copyright: (C) 2015-2019 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
