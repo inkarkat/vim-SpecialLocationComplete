@@ -60,6 +60,13 @@ CTRL-X CTRL-X it	Text between arbitrary tags (<...>text here</...>),
 			search for the base anywhere between arbitrary tags.
 			Unlike the |it| text object, the surrounding tags need
 			not match; they can be _any_ opening or closing tags!
+CTRL-X CTRL-X num	Find decimal numbers starting with / containing the
+			base.
+CTRL-X CTRL-X hex	Find hexadecimal numbers (with or without "0x" prefix)
+			starting with / containing the base.
+CTRL-X CTRL-X uuid	Find UUIDs (c2e9853b-4d8e-48b6-af5a-ef0e6279fa61 and
+			c2e9853b4d8e48b6af5aef0e6279fa61) starting with /
+			containing the base.
 
 ==============================================================================
 INSTALLATION				*SpecialLocationComplete-installation*
@@ -154,7 +161,7 @@ IDEAS					       *SpecialLocationComplete-ideas*
 ==============================================================================
 HISTORY					     *SpecialLocationComplete-history*
 
-1.10	RELEASEME
+2.00	RELEASEME
 - FIX: CompleteHelper#Repeat#Processor() condenses a new line and the
   following indent to a single space; need to translate that. Otherwise,
   repeats using %S in the a:options.repeatPatternTemplate will not work on
