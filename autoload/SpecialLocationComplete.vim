@@ -1,63 +1,13 @@
 " SpecialLocationComplete.vim: Insert mode completion for special custom patterns.
 "
 " DEPENDENCIES:
-"   - CompleteHelper.vim autoload script
-"   - Complete/Repeat.vim autoload script
-"   - ingo/list.vim autoload script
-"   - ingo/query/get.vim autoload script
+"   - CompleteHelper.vim plugin
+"   - ingo-library.vim plugin
 "
 " Copyright: (C) 2015-2019 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
-"
-" REVISION	DATE		REMARKS
-"   2.00.005	13-Jun-2016	ENH: Visualize remaining keys to be typed by
-"				bracketing with [...] in s:PrintAvailableKeys().
-"				Otherwise, if there's only a single match but
-"				multiple keys remaining, there's no progress
-"				indication.
-"				Also print chosen completion after it has been
-"				queried so that the last typing hint does not
-"				remain on the screen, which is confusing.
-"				Refactoring: Make s:GetAllConfigKeys() return
-"				the entire configuration as s:GetConfig(), and
-"				obsolete s:GetConfig(key), s:GetOptions(). No
-"				such key is now handled by directly checking the
-"				configuration for the key, not by throwing
-"				"SpecialLocationComplete: No such key"
-"				exception.
-"				Refactoring: Resolve the current configuration
-"				only one per SpecialLocationComplete#Expr() to
-"				avoid re-computation on each invocation of the
-"				completion function. I also need the config in
-"				scope for the new s:SortByConfigPriority()
-"				sorting function.
-"				ENH: Support sorting of completions via
-"				a:options.priority.
-"   1.10.004	10-Jun-2016	FIX: CompleteHelper#Repeat#Processor() condenses
-"				a new line and the following indent to a single
-"				space; need to translate that. Otherwise,
-"				repeats using %S in the
-"				a:options.repeatPatternTemplate will not work on
-"				tab-indented or multi-line matches.
-"				ENH: Support multiple keys for triggering a
-"				special completion.
-"				ENH: Support Lists of a:options.patternTemplate
-"				and a:options.emptyBasePattern; these are
-"				searched sequentially until one yields matches.
-"				This allows fallbacks, e.g. a relaxed search
-"				anywhere vs. a strict search for base at the
-"				beginning.
-"   1.00.003	19-Feb-2015	Support a:options.emptyBasePattern.
-"				Add SpecialLocationComplete#SetKey() and
-"				SpecialLocationComplete#GetKey() for testing.
-"				Allow passing a key to
-"				SpecialLocationComplete#Expr() to enable custom
-"				direct mappings.
-"   1.00.002	16-Feb-2015	Need to get repeat...Expr from a:options; there
-"				are no local variables.
-"	001	13-Feb-2015	file creation
 let s:save_cpo = &cpo
 set cpo&vim
 

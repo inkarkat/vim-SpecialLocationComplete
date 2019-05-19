@@ -2,29 +2,11 @@
 "
 " DEPENDENCIES:
 "   - Requires Vim 7.0 or higher.
-"   - SpecialLocationComplete.vim autoload script
 "
-" Copyright: (C) 2015-2016 Ingo Karkat
+" Copyright: (C) 2015-2019 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
-"
-" REVISION	DATE		REMARKS
-"   2.00.005	13-Jun-2016	ENH: Add default completions for decimal and
-"				hexadecimal numbers, UUIDs.
-"				ENH: Support sorting of completions via
-"				a:options.priority.
-"   1.10.004	10-Jun-2016	ENH: Add new <C-t> default completion of full
-"				tag attributes (e.g. <tag foo="bar">).
-"				ENH: Add new it default completion for text
-"				between tags.
-"   1.00.003	19-Feb-2015	Tweak default tagname configuration to also
-"				consider closing tags, and complete only the
-"				tagname without leading < when that isn't part
-"				of the base.
-"   1.00.002	16-Feb-2015	Add another default pattern for tagname.
-"				Simplify base pattern; it doesn't need to match.
-"	001	13-Feb-2015	file creation
 
 " Avoid installing twice or when in unsupported Vim version.
 if exists('g:loaded_SpecialLocationComplete') || (v:version < 700)
