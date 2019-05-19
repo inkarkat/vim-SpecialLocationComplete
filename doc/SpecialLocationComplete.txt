@@ -173,7 +173,7 @@ https://github.com/inkarkat/vim-SpecialLocationComplete/issues or email
 ==============================================================================
 HISTORY					     *SpecialLocationComplete-history*
 
-2.00	RELEASEME
+2.00	19-May-2019
 - FIX: CompleteHelper#Repeat#Processor() condenses a new line and the
   following indent to a single space; need to translate that. Otherwise,
   repeats using %S in the a:options.repeatPatternTemplate will not work on
