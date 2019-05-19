@@ -1,7 +1,6 @@
 " Test repeat of full tags completion.
 
 runtime tests/helpers/insert.vim
-source autoload/SpecialLocationComplete.vim
 view tagged.txt
 new
 
