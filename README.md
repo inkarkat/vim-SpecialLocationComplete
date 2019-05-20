@@ -144,6 +144,15 @@ and explains their use:
 In addition, any other a:options from CompleteHelper#FindMatches() can be
 specified, too. These are passed to the CompleteHelper function.
 
+If you already have a complete-function implementation, and you want to
+include it in the SpecialLocationComplete under a key (instead of assigning a
+separate |i\_CTRL-X|-... mapping), you can add its 'completefunc' value via
+
+    \       'completefunc': 'MyPlugin#Complete',
+
+The plugin will just forward the trigger then, and offer repeat completions
+based on the inserted text, too.
+
 If you want to use a different mapping, map your keys to the
 &lt;Plug&gt;(SpecialLocationComplete) mapping target _before_ sourcing the script
 (e.g. in your vimrc):
@@ -159,6 +168,9 @@ https://github.com/inkarkat/vim-SpecialLocationComplete/issues or email
 
 HISTORY
 ------------------------------------------------------------------------------
+
+##### 2.10    RELEASEME
+- ENH: Allow to configure existing 'completefunc' with a custom key here, too.
 
 ##### 2.00    19-May-2019
 - FIX: CompleteHelper#Repeat#Processor() condenses a new line and the

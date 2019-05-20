@@ -170,6 +170,10 @@ function! SpecialLocationComplete#SpecialLocationComplete( findstart, base )
 	endif
     endif
 
+    if has_key(l:options, 'completefunc')
+	return call(l:options.completefunc, [a:findstart, a:base])
+    endif
+
     if a:findstart
 	" Locate the start of the configured characters.
 	let l:base = get(l:options, 'base', '\k\*\%#')
