@@ -4,7 +4,7 @@
 "   - CompleteHelper.vim plugin
 "   - ingo-library.vim plugin
 "
-" Copyright: (C) 2015-2019 Ingo Karkat
+" Copyright: (C) 2015-2022 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -75,7 +75,9 @@ function! SpecialLocationComplete#GetKey( config )
 
     while 1
 	call inputsave()
-	    let l:keypress = ingo#query#get#Char()
+	    let l:keypress = ingo#query#get#Char({
+	    \   'isAllowDigraphs': 0,
+	    \})
 	call inputrestore()
 
 	if empty(l:keypress)

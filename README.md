@@ -79,7 +79,7 @@ To uninstall, use the :RmVimball command.
 ### DEPENDENCIES
 
 - Requires Vim 7.0 or higher.
-- Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.010 or
+- Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.044 or
   higher.
 - Requires the CompleteHelper.vim plugin ([vimscript #3914](http://www.vim.org/scripts/script.php?script_id=3914)), version 1.40 or
   higher.
@@ -172,6 +172,8 @@ HISTORY
 ##### 2.10    RELEASEME
 - ENH: Allow to configure existing 'completefunc' with a custom key here, too.
 
+__You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.044!__
+
 ##### 2.00    19-May-2019
 - FIX: CompleteHelper#Repeat#Processor() condenses a new line and the
   following indent to a single space; need to translate that. Otherwise,
@@ -194,7 +196,7 @@ HISTORY
 - Started development.
 
 ------------------------------------------------------------------------------
-Copyright: (C) 2015-2019 Ingo Karkat -
+Copyright: (C) 2015-2022 Ingo Karkat -
 The [VIM LICENSE](http://vimdoc.sourceforge.net/htmldoc/uganda.html#license) applies to this plugin.
 
 Maintainer:     Ingo Karkat &lt;ingo@karkat.de&gt;
