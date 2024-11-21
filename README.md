@@ -169,7 +169,7 @@ https://github.com/inkarkat/vim-SpecialLocationComplete/issues or email
 HISTORY
 ------------------------------------------------------------------------------
 
-##### 2.10    RELEASEME
+##### 2.10    21-Nov-2024
 - ENH: Allow to configure existing 'completefunc' with a custom key here, too.
 
 __You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.044!__
@@ -196,7 +196,7 @@ __You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scrip
 - Started development.
 
 ------------------------------------------------------------------------------
-Copyright: (C) 2015-2022 Ingo Karkat -
+Copyright: (C) 2015-2024 Ingo Karkat -
 The [VIM LICENSE](http://vimdoc.sourceforge.net/htmldoc/uganda.html#license) applies to this plugin.
 
 Maintainer:     Ingo Karkat &lt;ingo@karkat.de&gt;
