@@ -79,7 +79,7 @@ To uninstall, use the :RmVimball command.
 ### DEPENDENCIES
 
 - Requires Vim 7.0 or higher.
-- Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.010 or
+- Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.044 or
   higher.
 - Requires the CompleteHelper.vim plugin ([vimscript #3914](http://www.vim.org/scripts/script.php?script_id=3914)), version 1.40 or
   higher.
@@ -144,6 +144,15 @@ and explains their use:
 In addition, any other a:options from CompleteHelper#FindMatches() can be
 specified, too. These are passed to the CompleteHelper function.
 
+If you already have a complete-function implementation, and you want to
+include it in the SpecialLocationComplete under a key (instead of assigning a
+separate |i\_CTRL-X|-... mapping), you can add its 'completefunc' value via
+
+    \       'completefunc': 'MyPlugin#Complete',
+
+The plugin will just forward the trigger then, and offer repeat completions
+based on the inserted text, too.
+
 If you want to use a different mapping, map your keys to the
 &lt;Plug&gt;(SpecialLocationComplete) mapping target _before_ sourcing the script
 (e.g. in your vimrc):
@@ -159,6 +168,11 @@ https://github.com/inkarkat/vim-SpecialLocationComplete/issues or email
 
 HISTORY
 ------------------------------------------------------------------------------
+
+##### 2.10    21-Nov-2024
+- ENH: Allow to configure existing 'completefunc' with a custom key here, too.
+
+__You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.044!__
 
 ##### 2.00    19-May-2019
 - FIX: CompleteHelper#Repeat#Processor() condenses a new line and the
@@ -182,7 +196,7 @@ HISTORY
 - Started development.
 
 ------------------------------------------------------------------------------
-Copyright: (C) 2015-2019 Ingo Karkat -
+Copyright: (C) 2015-2024 Ingo Karkat -
 The [VIM LICENSE](http://vimdoc.sourceforge.net/htmldoc/uganda.html#license) applies to this plugin.
 
 Maintainer:     Ingo Karkat &lt;ingo@karkat.de&gt;
